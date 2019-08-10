@@ -5,8 +5,75 @@
 TITLE="System Information Page for $HOSTNAME"
 CURRENT_TIME=$(date +"%x %r %Z")
 TIMESTAMP="Generated $CURRENT_TIME, by $USER"
+PROGNAME=$(basename $0)
 
 #shell function definitions--must come befor call
+
+
+#usage returns help information if -h or --help option is specified
+#as a command line arg
+
+function usage {
+
+	echo "$PROGNAME: usage : $PROGNAME [-f file | -i]"
+	return
+
+
+}
+
+#these are empty so they wouldn't be picked up as args
+interactive=
+filename=
+
+while [[ -n $1 ]]; do
+	case $1 in 
+		-f | --file) 		shift
+					filename=$1
+					;;
+					
+		-i | --interactive)	interactive=1
+					;;
+					
+		-h | --help)		usage
+					exit
+					;;
+					
+		*)			usage
+					exit 1
+					;;
+	esac				
+done											
+
+
+
+#code for interactive mode
+
+if [[ -n $interactive ]]; then
+	while true; do
+		read -p "Enter output file name > " filename
+		if [[ -e $filename ]]; then
+			read -p "$filename already exists.Do yo want to overwrite it? [y/n/q]"
+			
+			case $REPLY in
+				y | Y) break
+					;;
+					
+				q | Q)  echo "Program terminated"
+					exit
+					;;
+						
+				*)	continue
+					;;
+			esac
+			
+		elif [[ -z $filename ]]; then
+			continue
+		else 
+			break;
+		fi
+	done
+fi				
+						
 
 # reports time since last poweron
 function report_uptime {
