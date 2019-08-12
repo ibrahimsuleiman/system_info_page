@@ -17,63 +17,48 @@ function usage {
 
 	echo "$PROGNAME: usage : $PROGNAME [-f file | -i]"
 	return
+}
 
+
+# reports amount of space used by each user
+function report_home_space {
+	if [[$(id -u) == 0]]; then
+			cat <<- _EOF_
+				<h2>Home Space Utilization (All Users)</h2>
+				<pre>$(du -sh /home/*)</pre>
+			_EOF_
+	else
+		cat <<- _EOF_
+			<h2>Home Space Utilization ($USER)</h2>
+			<pre>$(du -sh $HOME)</pre>
+			_EOF_
+	fi
+	
+	return 
+}
+# a 'here' document in this function. embeds a body of text and feeds it 
+# into stdin of cat
+# <<- ignores leading tab characters, good for readability
+function write_html_file { 
+cat <<- _EOF_
+ <html>
+	<head>
+	 	<title>$TITLE</title>
+	</head>
+ 	
+	<body>
+		<h1>$TITLE</h1>
+		<p>$TIMESTAMP</p>
+		$(report_uptime)
+		$(report_disk_space)
+		$(report_home_space)
+	</body>
+</html>
+_EOF_
+return 
 
 }
 
-#these are empty so they wouldn't be picked up as args
-interactive=
-filename=
-
-while [[ -n $1 ]]; do
-	case $1 in 
-		-f | --file) 		shift
-					filename=$1
-					;;
-					
-		-i | --interactive)	interactive=1
-					;;
-					
-		-h | --help)		usage
-					exit
-					;;
-					
-		*)			usage
-					exit 1
-					;;
-	esac				
-done											
-
-
-
-#code for interactive mode
-
-if [[ -n $interactive ]]; then
-	while true; do
-		read -p "Enter output file name > " filename
-		if [[ -e $filename ]]; then
-			read -p "$filename already exists.Do yo want to overwrite it? [y/n/q]"
-			
-			case $REPLY in
-				y | Y) break
-					;;
-					
-				q | Q)  echo "Program terminated"
-					exit
-					;;
-						
-				*)	continue
-					;;
-			esac
-			
-		elif [[ -z $filename ]]; then
-			continue
-		else 
-			break;
-		fi
-	done
-fi				
-						
 
 # reports time since last poweron
 function report_uptime {
@@ -93,40 +78,72 @@ function report_disk_space {
 	return
 }
 
-# reports amount of space used by each user
-function report_home_space {
-	if [[$(id -u) == 0]]; then
-			cat <<- _EOF_
-				<h2>Home Space Utilization (All Users)</h2>
-				<pre>$(du -sh /home/*)</pre>
-			_EOF_
-	else
-		cat <<- _EOF_
-			<h2>Home Space Utilization ($USER)</h2>
-			<pre>$(du -sh $HOME)</pre>
-			_EOF_
-	fi
-	
-	return 
-}
+#these are empty so they wouldn't be picked up as args
+interactive=
+filename=
 
-# a 'here' document. embeds a body of text and feeds it 
-# into stdin of cat
-# <<- ignores leading tab characters, good for readability
-cat <<- _EOF_
- <html>
-	<head>
-	 	<title>$TITLE</title>
-	</head>
- 	
-	<body>
-		<h1>$TITLE</h1>
-		<p>$TIMESTAMP</p>
-		$(report_uptime)
-		$(report_disk_space)
-		$(report_home_space)
-	</body>
-</html>
-_EOF_
+while [[ -n $1 ]]; do
+	case $1 in 
+		-f|--file) 		shift
+					filename=$1
+					;;
+					
+		-i|--interactive)	interactive=1
+					;;
+					
+		-h|--help)		usage
+					exit
+					;;
+					
+		*)			usage
+					exit 1
+					;;
+	esac
+	shift				
+done											
+
+
+
+#code for interactive mode
+
+if [[ -n $interactive ]]; then
+	while true; do
+		read -p "Enter output file name > " filename
+		if [[ -e $filename ]]; then
+			read -p "$filename already exists.Do yo want to overwrite it? [y/n/q]"
+			
+			case $REPLY in
+				y|Y) break
+					;;
+					
+				q|Q)  echo "Program terminated" >&2
+					exit
+					;;
+						
+				*)	continue
+					;;
+			esac
+			
+		elif [[ -z $filename ]]; then
+			continue
+		else 
+			break;
+		fi
+	done
+fi				
+						
+#code for filename provided
+
+if [[ -n $filename ]]; then
+	if touch $filename && [[ -f $filename ]]; then
+	write_html_file > $filename
+	else
+		echo "$PROGNAME: $filename could not be read!" >&2
+		exit 1
+	fi	
+else
+	write_html_file	
+fi
+	
 
 
