@@ -22,7 +22,7 @@ function usage {
 
 # reports amount of space used by each user
 function report_home_space {
-	if [[$(id -u) == 0]]; then
+	if [[ $(id -u) == 0 ]]; then
 			cat <<- _EOF_
 				<h2>Home Space Utilization (All Users)</h2>
 				<pre>$(du -sh /home/*)</pre>
@@ -44,6 +44,13 @@ cat <<- _EOF_
  <html>
 	<head>
 	 	<title>$TITLE</title>
+		<style>
+		body{width: 50%; margin: auto}
+		p, pre{ background-color:#FFFFF0; border-left: 4px solid #FF7F50; padding: 20px;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);}
+		h1,h2{font-family: Arial, Helvetica; color:#FF7F50;}
+		</style>
+		
 	</head>
  	
 	<body>
